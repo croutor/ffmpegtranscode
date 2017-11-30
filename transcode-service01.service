@@ -1,0 +1,17 @@
+[Unit]
+Description=Transcode service 01
+# When systemd stops or restarts the app.service, the action is propagated to this unit
+PartOf=transcode.service
+# # Start this unit after the app.service start
+After=transcode.service
+
+[Service]
+# Pretend that the component is running
+ExecStart=/bin/sleep infinity
+# Restart the service on non-zero exit code when terminated by a signal other than SIGHUP, SIGINT, SIGTERM or SIGPIPE
+Restart=on-failure
+
+[Install]
+# This unit should start when transcode.service is starting
+WantedBy=transcode.service
+#
