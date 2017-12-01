@@ -1,14 +1,18 @@
 [Unit]
-Description=FFMEG Transcoding Application
+Description=Transcode TV streams using ffmpeg
+After=network.target mumudvb
 
 [Service]
+EnvironmentFile=/etc/default/ffmpegtranscode.conf
 # The dummy program will exit
 Type=oneshot
+ExecStartPre=${TC} qdisc add dev ${IF} root handle 1:0 htb default 30
 # Execute a dummy program
 ExecStart=/bin/true
 # This service shall be considered active after start
+ExecStopPre=iptables -t  mangle -F
+ExecStopPre=$TC qdisc del dev ${IF} root
 RemainAfterExit=yes
 
 [Install]
-# Components of this application should be started at boot time
 WantedBy=multi-user.target
