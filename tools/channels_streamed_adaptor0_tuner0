@@ -1,0 +1,7 @@
+ # example of /var/run/mumudvb/channels_streamed_adapter0_tuner0
+ Blablabla
+ Channel: "France 2"
+ ip: 239.1.2.3
+ Blablabla
+ Channel: "France 3"
+ ip: 239.1.2.4
