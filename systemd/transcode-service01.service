@@ -6,8 +6,18 @@ PartOf=transcode.service
 After=transcode.service
 
 [Service]
-# Pretend that the component is running
-ExecStart=/bin/sleep infinity
+# Input
+Environment=SRC=udp://@239.10.6.1:8200
+# Output
+Environment=DST=udp://@239.10.8.1:8200
+# Common parameters between all trasncode services
+EnvironmentFile=/etc/default/ffmpegtranscode.conf
+# multicast shaping
+ExecStartPre=${TC} class add dev ${IF} parent 1: classid 1:${MARK} htb rate ${RATE} ceil ${BURST}
+ExecStartPre=${TC} filter add dev ${IF} protocol ip parent 1:0 prio 1 handle ${MARK} fw classid 1:${MARK}
+ExecStartPre=${IPTABLES} -t mangle -A POSTROUTING -d ${ip} -j MARK --set-mark ${MARK}
+# Transcode service
+ExecStart=/bin/sh -c "${NICE} -n 1 ${FFMPEG} ${UDP_SD_PARAMETERS}"
 # Restart the service on non-zero exit code when terminated by a signal other than SIGHUP, SIGINT, SIGTERM or SIGPIPE
 Restart=on-failure
 
