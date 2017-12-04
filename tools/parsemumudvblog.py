@@ -1,5 +1,6 @@
 # coding: utf8
 import json
+import os
 import pprint
 #import pymongo
 
@@ -66,22 +67,28 @@ ChannelsLogo = {
 def channelListWithIP(log_fh):
     currentDict = {}
     for line in log_fh:
-        if "Channel" in line:
-			# line containing the channel name:
-            channel = line.split(':')[1].strip().rstrip('"').strip('"')
-            # line containing the IP address:
-            IP = log_fh.next().split(':')[1].strip()
-            print( channel, IP)
-            currentDict[channel] = IP
+        splitList = line.split(':')
+        IP = splitList[0]
+        port = splitList[1]
+        channel = splitList[2]
+        currentDict[channel] = IP
+    return currentDict
+
+def channelListWithIP():
+    currentDict = {}
+    for f in os.listdir('/var/run/mumudvb/'):
+        filename = os.fsdecode(f)
+        if filename.startswith('channels_streamed_adaptor'):
+            print filename
+            with open("channels_streamed_adaptor0_tuner0") as f:
+                channelList = channelListWithIP(f)
     return currentDict
 
 def main():
-    channelList = {}
-    channelData = []
     pp = pprint.PrettyPrinter(indent=4)
-    with open("channels_streamed_adaptor0_tuner0") as f:
-        channelList = channelListWithIP(f)
-        print channelList
+    channelData = []
+    channelList = channelListWithIP()
+    print channelList
     for channelName, IP in channelList.iteritems():
 		channel = {
 		'name' : channelName,

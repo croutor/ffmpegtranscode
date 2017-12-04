@@ -1,23 +1,25 @@
 [Unit]
 Description=Transcode service 01
 # When systemd stops or restarts the app.service, the action is propagated to this unit
-PartOf=transcode.service
+PartOf=ffmpegtranscode.service
 # # Start this unit after the app.service start
-After=transcode.service
+After=ffmpegtranscode.service
 
 [Service]
 # Input
 Environment=SRC=udp://@239.10.6.1:8200
 # Output
 Environment=DST=udp://@239.10.8.1:8200
+# Must be unique
+Environment=MARK=1
 # Common parameters between all trasncode services
 EnvironmentFile=/etc/default/ffmpegtranscode.conf
 # multicast shaping
-ExecStartPre=${TC} class add dev ${IF} parent 1: classid 1:${MARK} htb rate ${RATE} ceil ${BURST}
-ExecStartPre=${TC} filter add dev ${IF} protocol ip parent 1:0 prio 1 handle ${MARK} fw classid 1:${MARK}
-ExecStartPre=${IPTABLES} -t mangle -A POSTROUTING -d ${ip} -j MARK --set-mark ${MARK}
+#ExecStartPre=/bin/sh -c "${TC} class add dev ${IF} parent 1: classid 1:${MARK} htb rate ${RATE} ceil ${BURST}"
+#ExecStartPre=/bin/sh -c "${TC} filter add dev ${IF} protocol ip parent 1:0 prio 1 handle ${MARK} fw classid 1:${MARK}"
+#ExecStartPre=/bin/sh -c "${IPTABLES} -t mangle -A POSTROUTING -d ${ip} -j MARK --set-mark ${MARK}"
 # Transcode service
-ExecStart=/bin/sh -c "${NICE} -n 1 ${FFMPEG} ${UDP_SD_PARAMETERS}"
+ExecStart=/bin/sh -c "${NICE} -n 1 ${FFMPEG} ${UDP_SRC} ${SD_PARAMETERS} ${UDP_DST}"
 # Restart the service on non-zero exit code when terminated by a signal other than SIGHUP, SIGINT, SIGTERM or SIGPIPE
 Restart=on-failure
 
@@ -25,3 +27,4 @@ Restart=on-failure
 # This unit should start when transcode.service is starting
 WantedBy=transcode.service
 #
+

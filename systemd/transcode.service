@@ -6,13 +6,15 @@ After=network.target mumudvb
 EnvironmentFile=/etc/default/ffmpegtranscode.conf
 # The dummy program will exit
 Type=oneshot
-ExecStartPre=${TC} qdisc add dev ${IF} root handle 1:0 htb default 30
+ExecStartPre=/bin/sh -c "${TC} qdisc add dev ${IF} root handle 1:0 htb default 30"
 # Execute a dummy program
 ExecStart=/bin/true
 # This service shall be considered active after start
-ExecStopPre=iptables -t  mangle -F
-ExecStopPre=$TC qdisc del dev ${IF} root
+ExecStop=/bin/sh -c "${IPTABLES} -t  mangle -F"
+ExecStop=/bin/sh -c "${TC} qdisc del dev ${IF} root"
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
+
+
