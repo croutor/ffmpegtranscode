@@ -2,8 +2,16 @@
 import json
 import os
 import pprint
-#import pymongo
+from pymongo import MongoClient
 
+MONGO_URL='10.42.0.10'
+MONGO_DB='tv'
+MONGO_COLLECTION='channels'
+
+imagePath = '/images/channels'
+mumuConfDir = '/var/run/mumudvb/'
+protocol = 'udp'
+port = '8200'
 # Could be retrieve, but for now, F... it
 # http://www.csa.fr/Television/Les-chaines-de-television/Les-chaines-hertziennes-terrestres/La-numerotation-des-chaines
 channelOrder = {
@@ -39,43 +47,39 @@ channelOrder = {
               'PARIS PREMIERE': 41,
               'CANAL+ SPORT'  : 42
          }
-protocol = 'udp'
-port = '8200'
-imagePath = 'image/channels'
-mumuConfDir = '/var/run/mumudvb/'
 
 ChannelsLogo = {
-              'TF1'           :  'TF1.png',
-              'France 2'      :  'France2.png',
-              'France 3'      :  'France3.png',
-              'CANAL+'        :  'Canal+.png',
-              'France 5'      :  'France5.png',
-              'M6'            :  'M6.png',
-              'Arte'          :  'Arte.png',
-              'C8'            :  'C8.png',
-              'W9'            :  'W9.png',
-              'TMC'           :  'TMC.png',
-              'NT1'           :  'NT1.png',
-              'NRJ12'         :  'NRJ12.png',
-              'LCP'           :  'LCP.png',
-              'France 4'      :  'France4.png',
-              'BFM TV'        :  'BFM_TV.png',
-              'CNEWS'         :  'CNEWS.png',
-              'CSTAR'         :  'CStar.png',
-              'Gulli'         :  'Gulli.png',
-              'France Ô'      :  'FranceÔ.png',
-              'HD1'           :  'HD1.png',
-              'L\'Equipe 21'  : 'L\'Equipe 21.png',
+              'TF1'           : 'TF1.png',
+              'France 2'      : 'France2.png',
+              'France 3'      : 'France3.png',
+              'CANAL+'        : 'Canal.png',
+              'France 5'      : 'France5.png',
+              'M6'            : 'M6.png',
+              'Arte'          : 'Arte.png',
+              'C8'            : 'Canal_8.png',
+              'W9'            : 'W9.png',
+              'TMC'           : 'TMC.png',
+              'NT1'           : 'NT1.png',
+              'NRJ12'         : 'NRJ12.png',
+              'LCP'           : 'LCP.png',
+              'France 4'      : 'France4.png',
+              'BFM TV'        : 'BFMTV.png',
+              'CNEWS'         : 'cnews.png',
+              'CSTAR'         : 'CStar.png',
+              'Gulli'         : 'gulli.png',
+              'France Ô'      : 'FranceO.png',
+              'HD1'           : 'hd1.png',
+              'L\'Equipe 21'  : 'lequipe21.png',
               '6ter'          : '6ter',
-              'NUMERO 23'     : 'Numéro23.png',
-              'RMC Découverte': 'RMCDécouverte.png',
-              'Chérie 25'     : 'Chérie25.png',
+              'NUMERO 23'     : 'numero23.png',
+              'RMC Découverte': 'rmcdecouverte.png',
+              'Chérie 25'     : 'cherie25.png',
               'LCI'           : 'LCI.png',
-              'franceinfo'    : 'franceinfo.png',
-              'F3 Bretagne'   : 'France3Breatagne.png',
-              'TVR'           : 'TVR.png',
-              'PARIS PREMIERE': 'Paris_Premiere.png',
-              'CANAL+ SPORT'  : 'Canal+sport.png'
+              'franceinfo'    : 'FranceInfo.png',
+              'F3 Bretagne'   : 'France3.png',
+              'TVR'           : 'TVRennes.png',
+              'PARIS PREMIERE': 'paris_premiere.png',
+              'CANAL+ SPORT'  : 'canal_plus_sport.png'
          }
          
 def channelListWithIPOneFile(log_fh):
@@ -97,6 +101,17 @@ def channelListWithIP():
                 currentDict.update(channelList)
     return currentDict
 
+def updateMongo(channels):
+    client = MongoClient('mongodb://' + MONGO_URL + ':27017')
+    db = client[MONGO_DB]
+    collection = db[MONGO_COLLECTION]
+    for channel in channels:
+        jChannel = json.dumps(channel)
+        print jChannel
+        collection.insert(channel)
+
+
+
 def main():
     pp = pprint.PrettyPrinter(indent=4)
     channelData = []
@@ -104,19 +119,21 @@ def main():
     print channelList
     for channelName, IP in channelList.iteritems():
 		channel = {
-		'name' : channelName,
-		'address': protocol + IP + port,
-		'image' : {
-			'path' : imagePath,
-			'logo' : ChannelsLogo[channelName]
+		'label' : channelName,
+		'logo' : {
+			'filepath' : imagePath,
+			'filename' : ChannelsLogo[channelName]
 		},
+                'protocol' : protocol,
+                'url': '@' + IP + ':' + port,
 		'order' : channelOrder[channelName]
 		}
 		
 		channelData.append(channel)
     #print channelData
-    jChannelData = json.dumps(channelData)
-    pp.pprint(jChannelData)
+    #jChannelData = json.dumps(channelData)
+    #print json.dumps(channelData, indent=4, sort_keys=True)
+    updateMongo(channelData)
 
 if __name__ == "__main__":
     main()
